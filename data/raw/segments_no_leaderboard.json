@@ -11,7 +11,25 @@
     21977568,
     13695071,
     26244737,
-    3896321
+    3896321,
+    7337448,
+    4365267,
+    19411268,
+    21795226,
+    4904950,
+    1454003,
+    15890269,
+    11414645,
+    5244998,
+    14904081,
+    27128653,
+    17848934,
+    19834495,
+    25335968,
+    18720584,
+    14873476,
+    13891414,
+    11144469
   ],
   "segments": [
     {
@@ -73,6 +91,96 @@
       "id": 3896321,
       "name": "faux plat station St Gilles",
       "checked_at": "2025-11-21 11:13:45"
+    },
+    {
+      "id": 7337448,
+      "name": "Petit coup de rein",
+      "checked_at": "2025-11-21 12:08:28"
+    },
+    {
+      "id": 4365267,
+      "name": "St Benoit Mont\u00e9e 1",
+      "checked_at": "2025-11-21 12:08:55"
+    },
+    {
+      "id": 19411268,
+      "name": "Kom 4 voie st andr\u00e9",
+      "checked_at": "2025-11-21 12:10:28"
+    },
+    {
+      "id": 21795226,
+      "name": "Final Clm Tour 2019",
+      "checked_at": "2025-11-21 12:12:14"
+    },
+    {
+      "id": 4904950,
+      "name": "Rue Paul Verlaine",
+      "checked_at": "2025-11-21 12:12:27"
+    },
+    {
+      "id": 1454003,
+      "name": "Route Du Littoral Climb",
+      "checked_at": "2025-11-21 12:14:33"
+    },
+    {
+      "id": 15890269,
+      "name": "SENTIER THEO 1",
+      "checked_at": "2025-11-21 12:14:45"
+    },
+    {
+      "id": 11414645,
+      "name": "Rav. des Ch\u00e8vres N2002 Est-Ouest",
+      "checked_at": "2025-11-21 12:15:11"
+    },
+    {
+      "id": 5244998,
+      "name": "Sainte-Suzanne centre ville",
+      "checked_at": "2025-11-21 12:15:35"
+    },
+    {
+      "id": 14904081,
+      "name": "Gillot",
+      "checked_at": "2025-11-21 12:16:02"
+    },
+    {
+      "id": 27128653,
+      "name": "Sentier Beau Rivage",
+      "checked_at": "2025-11-21 15:15:19"
+    },
+    {
+      "id": 17848934,
+      "name": "Le petit chauffe cuisse",
+      "checked_at": "2025-11-21 15:17:19"
+    },
+    {
+      "id": 19834495,
+      "name": "Cote gravier Antenne",
+      "checked_at": "2025-11-21 15:18:13"
+    },
+    {
+      "id": 25335968,
+      "name": "Pente Para 2",
+      "checked_at": "2025-11-21 15:18:25"
+    },
+    {
+      "id": 18720584,
+      "name": "piste chatoire",
+      "checked_at": "2025-11-21 15:22:35"
+    },
+    {
+      "id": 14873476,
+      "name": "Grande Anse - 2",
+      "checked_at": "2025-11-21 15:22:59"
+    },
+    {
+      "id": 13891414,
+      "name": "Sprint trou d'eau",
+      "checked_at": "2025-11-21 15:32:31"
+    },
+    {
+      "id": 11144469,
+      "name": "vers nez de boeuf",
+      "checked_at": "2025-11-21 15:36:47"
     }
   ]
 }

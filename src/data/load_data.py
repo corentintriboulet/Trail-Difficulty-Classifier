@@ -427,7 +427,7 @@ async def main():
     
     extractor = StravaSegmentExtractor(ACCESS_TOKEN)
     
-    data = await extractor.extract_all_data_async(max_segments=100)
+    data = await extractor.extract_all_data_async(max_segments=250)
     extractor.save_data(data)
     
     print(f"\n{'='*50}")
