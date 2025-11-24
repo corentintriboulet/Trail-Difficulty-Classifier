@@ -360,7 +360,67 @@ class StravaSegmentExtractor:
                 writer.writerow(row)
         
         print(f"CSV saved to {csv_path}")
-    
+
+
+    def number_of_processed_segments(self):
+        """
+        Count how many segments are already processed by checking:
+        - reunion_segments.csv
+        - segments_no_leaderboard.json
+
+        Returns:
+            total_count (int)
+            {
+                'csv_count': X,
+                'json_count': Y,
+                'csv_ids': set([...]),
+                'json_ids': set([...])
+            }
+        """
+        csv_path = self.raw_folder / "reunion_segments.csv"
+        json_path = self.raw_folder / "segments_no_leaderboard.json"
+
+        csv_ids = set()
+        json_ids = set()
+
+        # --- CSV IDs ---
+        if csv_path.exists():
+            try:
+                with open(csv_path, "r", encoding="utf-8") as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        if "id" in row:
+                            try:
+                                csv_ids.add(int(row["id"]))
+                            except:
+                                pass
+            except Exception as e:
+                print(f"Error reading CSV: {e}")
+
+        # --- JSON IDs ---
+        if json_path.exists():
+            try:
+                with open(json_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+
+                    # Your format:
+                    # { "segment_ids": [id1, id2, ...] }
+                    if "segment_ids" in data:
+                        for sid in data["segment_ids"]:
+                            try:
+                                json_ids.add(int(sid))
+                            except:
+                                pass
+
+            except Exception as e:
+                print(f"Error reading JSON: {e}")
+
+        # Merge unique
+        total_ids = csv_ids.union(json_ids)
+
+        return len(total_ids)
+
+ 
     async def extract_all_data_async(self, max_segments=100):
         print(f"Searching for up to {max_segments} segments...")
         segments = self.search_reunion_segments(max_segments)
@@ -411,7 +471,7 @@ class StravaSegmentExtractor:
         
         return detailed_data
 
-
+    
 async def main():
     project_root = Path(__file__).resolve().parents[2]
     config_path = project_root / "config.yaml"
@@ -426,8 +486,9 @@ async def main():
     os.environ["AGENTQL_API_KEY"] = config["agentql"]["api_key"]
     
     extractor = StravaSegmentExtractor(ACCESS_TOKEN)
-    
-    data = await extractor.extract_all_data_async(max_segments=250)
+    nb_existing = extractor.number_of_processed_segments()
+    print(f"Already processed segments: {nb_existing}")
+    data = await extractor.extract_all_data_async(max_segments=nb_existing + 50)
     extractor.save_data(data)
     
     print(f"\n{'='*50}")
