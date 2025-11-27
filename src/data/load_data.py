@@ -277,7 +277,6 @@ class StravaSegmentExtractor:
         except Exception:
             return None, None, None
 
-    
     async def extract_segment_data_async(self, segment_id, segment_name=None):
         """Extract data: AgentQL first, then Strava API only if leaderboard exists"""
         
@@ -325,7 +324,7 @@ class StravaSegmentExtractor:
         
         all_segments = []
         segment_ids = set()
-        grid_size = 8
+        grid_size = 6
         lat_step = (lat_max - lat_min) / grid_size
         lng_step = (lng_max - lng_min) / grid_size
         
