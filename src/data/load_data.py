@@ -7,24 +7,19 @@ import asyncio
 import agentql
 import pandas as pd
 from playwright.async_api import async_playwright
-from Strava_Token_Manager import StravaTokenManager, make_strava_request_with_retry
+from Strava_Token_Manager import StravaTokenManager, make_strava_request_with_retry, RateLimitException
 from Leaderboard_Extractor import LeaderboardExtractor  # ← Import the new class
 
 
-class RateLimitException(Exception):
-    """Raised when Strava API rate limit is hit"""
-    pass
 
 
 def load_config(config_path):
     with open(config_path, "r") as f:
         return yaml.safe_load(f)
 
-
 def setup_agentql(api_key):
     agentql.configure(api_key=api_key)
     print("✓ AgentQL configured")
-
 
 class StravaSegmentExtractor:
     def __init__(self, token_manager, agentql_api_key):
@@ -66,8 +61,7 @@ class StravaSegmentExtractor:
         
         if response and response.status_code == 200:
             return response.json()
-        elif response is None:
-            raise RateLimitException("All Strava accounts are rate-limited")
+        # The exception is now raised directly by Strava_Token_Manager.py
         return None
     
     def get_segment_details(self, segment_id):
@@ -78,8 +72,7 @@ class StravaSegmentExtractor:
         
         if response and response.status_code == 200:
             return response.json()
-        elif response is None:
-            raise RateLimitException("All Strava accounts are rate-limited")
+        # The exception is now raised directly by Strava_Token_Manager.py
         return None
     
     async def init_browser(self):
@@ -150,12 +143,16 @@ class StravaSegmentExtractor:
     
     def search_reunion_segments(self, max_segments=100):
         """Search for segments in Reunion Island area"""
-        lat_min, lat_max = -20.9573239, -20.9096153
-        lng_min, lng_max = 55.4785652, 55.5090946
-        
+        lat_min, lat_max = -21.3980463, -20.8369424
+        lng_min, lng_max = 55.1707468, 55.9040842
+
+        #La bretagne
+        #lat_min, lat_max = -21.3980463, -20.8369424
+        #lng_min, lng_max = 55.4785652, 55.5090946
+
         all_segments = []
         segment_ids = set()
-        grid_size = 4
+        grid_size = 7
         lat_step = (lat_max - lat_min) / grid_size
         lng_step = (lng_max - lng_min) / grid_size
         
@@ -288,7 +285,7 @@ class StravaSegmentExtractor:
 
 
 async def main():
-    """Main execution with multi-account support"""
+    """Main execution with multi-account support and clean exit handling"""
     project_root = Path(__file__).resolve().parents[2]
     config_path = project_root / "config.yaml"
     
@@ -305,8 +302,21 @@ async def main():
     print(f"Already processed segments: {nb_existing}")
     
     target_segments = nb_existing + 50
-    data = await extractor.extract_all_data_async(max_segments=target_segments)
     
+    # Initialize data to an empty list in case the exception happens immediately
+    data = [] 
+    
+    try:
+        # ⚠️ Wrap the main extraction call to catch the RateLimitException
+        data = await extractor.extract_all_data_async(max_segments=target_segments)
+        
+    except RateLimitException as e:
+        # Catch the intended stop signal and print a clean message
+        print(f"\n❌ Script terminated cleanly by rate limit: {e}")
+        # 'data' will contain segments collected inside the loop, or [] if error occurred during search.
+        pass
+        
+    # The 'data' variable now holds all collected segments, even if the script was interrupted.
     extractor.save_data(data)
     
     print(f"\n{'='*50}")

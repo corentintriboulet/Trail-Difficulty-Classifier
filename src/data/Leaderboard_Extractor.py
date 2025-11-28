@@ -1,9 +1,3 @@
-"""
-Leaderboard_Extractor.py
-Module pour extraire les temps du leaderboard Strava
-Supporte AgentQL (par défaut) et Crawl4AI (fallback)
-"""
-
 import asyncio
 from bs4 import BeautifulSoup
 

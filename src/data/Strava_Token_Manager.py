@@ -5,6 +5,10 @@ import time
 from datetime import datetime, timedelta
 from typing import Optional, Dict
 
+class RateLimitException(Exception):
+    """Raised when Strava API rate limit is hit"""
+    pass
+
 class StravaTokenManager:
     """Manages multiple Strava accounts with fixed 15-min rate limit windows"""
     
@@ -168,8 +172,6 @@ class StravaTokenManager:
         account = self.get_current_account()
         account_name = account['name']
         access_token = account['config']['access_token']
-        # We assume token is valid to save an API call. 
-        # If it fails with 401, the request wrapper will trigger refresh.
         return access_token
     
     def switch_account(self) -> bool:
@@ -187,19 +189,11 @@ class StravaTokenManager:
         token = self.get_valid_token()
         return {"Authorization": f"Bearer {token}"}
     
-    def wait_for_next_window(self):
-        next_window = self._get_next_window_start()
-        now = datetime.now()
-        wait_seconds = (next_window - now).total_seconds()
-        if wait_seconds > 0:
-            print(f"\n⏰ Waiting {int(wait_seconds)}s until next window ({next_window.strftime('%H:%M:%S')})")
-            time.sleep(wait_seconds + 2)
-            # Reset current account window stats after waiting
-            current = self.get_current_account()['name']
-            self.account_stats[current]['calls_this_window'] = 0
-            self.account_stats[current]['current_window_start'] = self._get_current_window_start()
-    
     def handle_rate_limit(self) -> bool:
+        """
+        Handles rate limits by switching accounts.
+        CRITICAL CHANGE: Raises RateLimitException if ALL accounts are exhausted.
+        """
         current_account = self.get_current_account()['name']
         print("\n" + "="*60)
         print(f"⚠️  RATE LIMIT HIT for {current_account}")
@@ -212,13 +206,13 @@ class StravaTokenManager:
             print("="*60 + "\n")
             return True
         
-        print("⚠️  All accounts exhausted. Waiting for next window...")
-        self.wait_for_next_window()
-        
-        # After waiting, counters are reset by _reset_window_if_needed implicitly or manually
-        print("✓ Resuming...")
+        # --- STOPPING LOGIC ---
+        print("⚠️  All accounts exhausted. Stopping script.")
+        print(f"⏰ Next window starts at: {self._get_next_window_start().strftime('%H:%M:%S')}")
         print("="*60 + "\n")
-        return True
+        
+        # Raise the exception directly to force immediate exit of the call stack
+        raise RateLimitException("All Strava accounts are rate-limited, forcing stop.")
     
     def print_status(self):
         print(f"\n📊 API Usage Status (Window: {self._get_current_window_start().strftime('%H:%M')})")
@@ -241,10 +235,12 @@ def make_strava_request_with_retry(token_manager: StravaTokenManager,
     for attempt in range(max_retries):
         current_account = token_manager.get_current_account()['name']
         
+        # The two calls below will now RAISE RateLimitException and immediately exit this function
+        # if all accounts are exhausted, solving the infinite loop.
+        
         if not token_manager.can_make_call(current_account):
-            if not token_manager.handle_rate_limit():
-                return None
-            # Account might have changed, update var
+            token_manager.handle_rate_limit() # Will raise on exhaustion
+            # If switch succeeded, continue
             current_account = token_manager.get_current_account()['name']
         
         headers = token_manager.get_headers()
@@ -255,7 +251,7 @@ def make_strava_request_with_retry(token_manager: StravaTokenManager,
             time.sleep(2)
             continue
         
-        # SYNC: Update local stats from headers (Crucial Fix)
+        # SYNC: Update local stats from headers
         token_manager.update_usage_from_headers(current_account, response.headers)
         
         if response.status_code == 200:
@@ -263,9 +259,7 @@ def make_strava_request_with_retry(token_manager: StravaTokenManager,
             return response
         
         elif response.status_code == 429:
-            # Rate limit hit - header sync above should have already updated max counts
-            if not token_manager.handle_rate_limit():
-                return None
+            token_manager.handle_rate_limit() # Will raise on exhaustion
             continue
         
         elif response.status_code == 401:
@@ -278,4 +272,5 @@ def make_strava_request_with_retry(token_manager: StravaTokenManager,
             return None
             
     print(f"❌ Max retries ({max_retries}) reached")
-    return None 
+    return None
+                                  
